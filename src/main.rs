@@ -1,5 +1,4 @@
 use tokio;
-use serde_json::{Value};
 use reqwest::{Client, header};
 use futures::executor::block_on;
 
@@ -58,15 +57,14 @@ fn get_client(headers: header::HeaderMap) -> Client{
 
 #[tokio::main]
 async fn main() {
-	let body: String;
+	let token: authentication::AppToken;
 
 	let headers = initialize_headers();
 	let client = get_client(headers);
 	
-	(_, body) = block_on(authentication::get_token(client));
+	(_, token) = block_on(authentication::get_token(client));
 
-	let res: Value = serde_json::from_str(&*body).unwrap();
-
-	println!("text: {:?}", res);
+	println!("text: {}", token.access_token);
+	// println!("text: {:?}", token.access_token);
 
 }
