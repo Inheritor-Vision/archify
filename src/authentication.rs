@@ -30,7 +30,7 @@ fn get_app_data() -> Value{
 
 }
 
-pub async fn get_token(client: Client) -> (Client, AppToken){
+pub async fn get_token(client: &mut Client) -> AppToken{
 	let mut headers = header::HeaderMap::new();
 	let app_data = get_app_data();
 
@@ -51,5 +51,5 @@ pub async fn get_token(client: Client) -> (Client, AppToken){
 	
 	let token: AppToken = serde_json::from_str(&body).unwrap();
 
-	(client, token)
+	token
 }

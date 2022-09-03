@@ -60,9 +60,9 @@ async fn main() {
 	let token: authentication::AppToken;
 
 	let headers = initialize_headers();
-	let client = get_client(headers);
+	let mut client = get_client(headers);
 	
-	(_, token) = block_on(authentication::get_token(client));
+	token = block_on(authentication::get_token(&mut client));
 
 	println!("text: {}", token.access_token);
 	// println!("text: {:?}", token.access_token);
