@@ -1,0 +1,4 @@
+/target
+Cargo.lock
+data/app_data.json
+
