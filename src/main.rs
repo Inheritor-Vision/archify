@@ -6,8 +6,10 @@ use futures::executor::block_on;
 use std::fs::File;
 #[cfg(feature = "proxy")]
 use std::io::prelude::*;
+use std::str::FromStr;
 
 mod authentication;
+mod spot_api;
 
 static APP_USER_AGENT: &str = concat!(
 	env!("CARGO_PKG_NAME"),
@@ -63,8 +65,9 @@ async fn main() {
 	let mut client = get_client(headers);
 	
 	token = block_on(authentication::get_token(&mut client));
+	let playlist = block_on(spot_api::get_public_playlist(&mut client, &token, String::from_str("37i9dQZF1E4xgPGijPOoGv").unwrap()));
 
-	println!("text: {}", token.access_token);
+	println!("{}", playlist);
 	// println!("text: {:?}", token.access_token);
 
 }
