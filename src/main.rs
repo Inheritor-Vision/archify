@@ -34,12 +34,20 @@ fn initialize_headers() -> header::HeaderMap{
 
 fn get_client(headers: header::HeaderMap) -> Client{
 
-	let client = Client::builder()
+	let mut client = Client::builder()
 		.user_agent(APP_USER_AGENT)
-		.default_headers(headers)
-		.build().unwrap();
-	
+		.default_headers(headers);
+
+	client = if cfg!(feature = "proxy") {
 		client
+			.proxy(reqwest::Proxy::http("http://127.0.0.1:8080").unwrap())
+			.proxy(reqwest::Proxy::https("http://127.0.0.1:8080").unwrap())
+			.danger_accept_invalid_certs(true)
+	}else{
+		client
+	};
+	
+	client.build().unwrap()
 
 }
 
