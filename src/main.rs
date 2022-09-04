@@ -9,6 +9,7 @@ use std::io::prelude::*;
 use std::str::FromStr;
 
 mod authentication;
+mod database;
 mod spot_api;
 
 static APP_USER_AGENT: &str = concat!(
@@ -59,13 +60,17 @@ fn get_client(headers: header::HeaderMap) -> Client{
 
 #[tokio::main]
 async fn main() {
-	let token: authentication::Token;
-
 	let headers = initialize_headers();
-	let mut client = get_client(headers);
+	let mut client_spot = get_client(headers);
+
+	let token_async = authentication::get_token(&mut client_spot);
+
+	let client_db_async = database::initiliaze_db();
+
+	let (token, client_db) = futures::join!(token_async, client_db_async);
 	
-	token = block_on(authentication::get_token(&mut client));
-	let playlist = block_on(spot_api::get_public_playlist(&mut client, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
+	let playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
+
 
 	println!("{}", playlist);
 	// println!("text: {:?}", token.access_token);
