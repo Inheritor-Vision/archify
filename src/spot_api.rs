@@ -1,10 +1,10 @@
-use crate::authentication::AppToken;
+use crate::authentication::Token;
 
 use reqwest::{Client, header};
 
-pub async fn get_public_playlist(client: &mut Client, token: &AppToken, playlist_id: String) -> String{
+pub async fn get_public_playlist(client: &mut Client, token: &Token, playlist_id: String) -> String{
 	let uri = format!("https://api.spotify.com/v1/playlists/{}", playlist_id);
-	let auth_value = format!("{} {}", token.token_type, token.access_token);
+	let auth_value = format!("{} {}", token.token.token_type, token.token.access_token);
 	
 	let body = client.get(uri)
 		.query(&[("fields", "tracks.items(track(name,id))")])

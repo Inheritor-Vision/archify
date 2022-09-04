@@ -59,7 +59,7 @@ fn get_client(headers: header::HeaderMap) -> Client{
 
 #[tokio::main]
 async fn main() {
-	let token: authentication::AppToken;
+	let token: authentication::Token;
 
 	let headers = initialize_headers();
 	let mut client = get_client(headers);
