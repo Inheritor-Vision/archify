@@ -7,6 +7,7 @@ pub async fn get_public_playlist(client: &mut Client, token: &AppToken, playlist
 	let auth_value = format!("{} {}", token.token_type, token.access_token);
 	
 	let body = client.get(uri)
+		.query(&[("fields", "tracks.items(track(name,id))")])
 		.header(header::AUTHORIZATION, &auth_value)
 		.send()
 		.await

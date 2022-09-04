@@ -65,7 +65,7 @@ async fn main() {
 	let mut client = get_client(headers);
 	
 	token = block_on(authentication::get_token(&mut client));
-	let playlist = block_on(spot_api::get_public_playlist(&mut client, &token, String::from_str("37i9dQZF1E4xgPGijPOoGv").unwrap()));
+	let playlist = block_on(spot_api::get_public_playlist(&mut client, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
 
 	println!("{}", playlist);
 	// println!("text: {:?}", token.access_token);
