@@ -77,9 +77,10 @@ async fn main() {
 	};
 
 	
-	let _playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
+	let playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
+	database::set_public_playlist(&mut client, playlist).await;
+	let _playlists = database::get_all_public_playlists(&mut client).await;
 
-	//println!("{}", playlist);
 	// println!("text: {:?}", token.access_token);
 
 }

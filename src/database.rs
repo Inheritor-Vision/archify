@@ -3,13 +3,13 @@ use serde_json::Value;
 use crate::authentication::{Token, AppToken};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub struct PublicPlaylist {
+pub struct PublicPlaylist{
     pub id:  String,
-    pub sha256:  String,
+    pub sha256:  Box<[u8]>,
     pub data:  Value
 }
 
-type PublicPlaylists = Vec<PublicPlaylist>;
+pub type PublicPlaylists = Vec<PublicPlaylist>;
 
 async fn connect_db() -> tokio_postgres::Client{
 	let (client, connection) = tokio_postgres::connect("host=localhost user=archify-user dbname=archify-db", tokio_postgres::NoTls)
@@ -29,7 +29,7 @@ async fn connect_db() -> tokio_postgres::Client{
 async fn create_tables(client: &mut tokio_postgres::Client){
 
 	let (_r1, _r2) = futures::join!(
-		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 VARCHAR(64), playlist_data JSONB, PRIMARY KEY (playlist_id)) ", &[]),
+		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, playlist_data JSONB, PRIMARY KEY (playlist_id)) ", &[]),
 		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (token_value TEXT, user_id TEXT, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id))", &[])
 	);
 
@@ -100,7 +100,7 @@ pub async fn get_all_public_playlists(client: &mut tokio_postgres::Client) -> Pu
 	for row in r{
 		let t = PublicPlaylist{
 			id: row.get("playlist_id"),
-			sha256: row.get("playlist_sha256"),
+			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
 			data: row.get("playlist_data")
 		};
 		res.push(t);
@@ -112,10 +112,10 @@ pub async fn get_all_public_playlists(client: &mut tokio_postgres::Client) -> Pu
 pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: PublicPlaylist){
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		&playlist.id,
-		&playlist.sha256,
+		&&(*playlist.sha256),
 		&playlist.data
 	];
-	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::VARCHAR(64), $3::JSONB ON CONFLICT (playlist_id) DO UPDATE SET playlist_sha256 = $2::VARCHAR(64), playlist_data = $3::JSONB", params)
+	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::BYTEA, $3::JSONB) ON CONFLICT (playlist_id) DO UPDATE SET playlist_sha256 = $2::BYTEA, playlist_data = $3::JSONB", params)
 		.await
 		.unwrap();
 }
