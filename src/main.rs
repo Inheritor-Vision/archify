@@ -62,17 +62,26 @@ fn get_client(headers: header::HeaderMap) -> Client{
 async fn main() {
 	let headers = initialize_headers();
 	let mut client_spot = get_client(headers);
+	let app = String::from("archify");
 
-	let token_async = authentication::get_token(&mut client_spot);
+	let mut client = database::initiliaze_db().await;
 
-	let client_db_async = database::initiliaze_db();
+	let token = database::get_token(&mut client, &app).await; 
+	let token = match token {
+		Some(token) => token,
+		None => {
+			println!("GET TOKEN;");
+			let l_t = authentication::get_token(&mut client_spot).await;
+			database::set_token(&mut client, &app, &l_t).await;
+			l_t
+		}
+	};
 
-	let (token, client_db) = futures::join!(token_async, client_db_async);
 	
-	let playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
+	let _playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
 
 
-	println!("{}", playlist);
+	//println!("{}", playlist);
 	// println!("text: {:?}", token.access_token);
 
 }

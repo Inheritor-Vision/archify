@@ -14,3 +14,11 @@ General idea [here](https://community.spotify.com/t5/Spotify-for-Developers/Acce
 Get client (i.e. app, not end user) token [here](https://developer.spotify.com/documentation/general/guides/authorization/client-credentials/).
 Example in JS [here](https://github.com/spotify/web-api-auth-examples/tree/master/client_credentials).
 
+## Parameters for query_raw, execute_raw etc.
+
+```Rust
+let mut params: Vec<&(dyn tokio_postgres::types::ToSql + Sync)> = Vec::new();
+params.push(&user_id as &(dyn tokio_postgres::types::ToSql + Sync));
+
+let params = params.iter().map(|s| (*s as &(dyn tokio_postgres::types::ToSql + Sync)));
+```
