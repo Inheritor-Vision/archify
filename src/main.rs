@@ -70,7 +70,6 @@ async fn main() {
 	let token = match token {
 		Some(token) => token,
 		None => {
-			println!("GET TOKEN;");
 			let l_t = authentication::get_token(&mut client_spot).await;
 			database::set_token(&mut client, &app, &l_t).await;
 			l_t
@@ -79,7 +78,6 @@ async fn main() {
 
 	
 	let _playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
-
 
 	//println!("{}", playlist);
 	// println!("text: {:?}", token.access_token);
