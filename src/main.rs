@@ -1,4 +1,3 @@
-use sha2::Sha256;
 use tokio;
 use reqwest::{Client, header};
 
@@ -6,11 +5,11 @@ use reqwest::{Client, header};
 use std::fs::File;
 #[cfg(feature = "proxy")]
 use std::io::prelude::*;
-use std::sync::Arc;
 
 mod authentication;
 mod database;
 mod spot_api;
+mod arguments;
 
 static APP_USER_AGENT: &str = concat!(
 	env!("CARGO_PKG_NAME"),
@@ -98,7 +97,11 @@ async fn update_all_playlists(){
 #[tokio::main]
 async fn main() {
 
-	let handle = tokio::spawn(update_all_playlists());
-	handle.await.unwrap();
+	let args = arguments::parse_args();
+	match args{
+		arguments::Args::Update => tokio::spawn(update_all_playlists()).await.unwrap(),
+		arguments::Args::NewUser(_) => println!("Not available yet!"),
+		arguments::Args::NewPlaylist(_) => println!("Not available yet!"),
+	}
 
 }
