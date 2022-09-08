@@ -11,13 +11,14 @@ static FORM_TOKEN: [(&str, &str); 1] =
 		("grant_type", "client_credentials"), 
 	];
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone)]
 pub struct AppToken {
     pub access_token:  String,
     pub expires_in:  u64,
     pub token_type:  String
 }
 
+#[derive(Clone)]
 pub struct Token {
 	pub token: AppToken,
 	pub received_at: u64

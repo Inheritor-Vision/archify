@@ -1,12 +1,12 @@
+use sha2::Sha256;
 use tokio;
 use reqwest::{Client, header};
-use futures::executor::block_on;
 
 #[cfg(feature = "proxy")]
 use std::fs::File;
 #[cfg(feature = "proxy")]
 use std::io::prelude::*;
-use std::str::FromStr;
+use std::sync::Arc;
 
 mod authentication;
 mod database;
@@ -36,7 +36,7 @@ fn get_certificate() -> reqwest::Certificate{
 	cert
 }
 
-fn get_client(headers: header::HeaderMap) -> Client{
+fn create_client(headers: header::HeaderMap) -> Client{
 	let client: reqwest::ClientBuilder;
 
 	#[cfg(not(feature = "proxy"))]{
@@ -58,10 +58,10 @@ fn get_client(headers: header::HeaderMap) -> Client{
 
 }
 
-#[tokio::main]
-async fn main() {
+async fn update_all_playlists(){
+
 	let headers = initialize_headers();
-	let mut client_spot = get_client(headers);
+	let mut client_spot = create_client(headers);
 	let app = String::from("archify");
 
 	let mut client = database::initiliaze_db().await;
@@ -77,10 +77,28 @@ async fn main() {
 	};
 
 	
-	let playlist = block_on(spot_api::get_public_playlist(&mut client_spot, &token, String::from_str("37i9dQZF1DZ06evO2JFuM8").unwrap()));
-	database::set_public_playlist(&mut client, playlist).await;
-	let _playlists = database::get_all_public_playlists(&mut client).await;
+	let playlists = database::get_all_latest_public_playlists(&mut client).await;
+	let received_playlists = spot_api::get_all_public_playlists(&client_spot, &token, &playlists).await;
 
-	// println!("text: {:?}", token.access_token);
+	let mut iter_old = playlists.iter();
+	let mut iter_new = received_playlists.iter();
+
+	for _ in 0..playlists.len(){
+		let p = iter_new.next().unwrap();
+		let old_sha256 = iter_old.next().unwrap().sha256.as_ref();
+		let new_sha256 = p.sha256.as_ref();
+		if *old_sha256 != *new_sha256 {
+			database::set_public_playlist(&mut client, p).await;
+		}
+	}
+
+
+}
+
+#[tokio::main]
+async fn main() {
+
+	let handle = tokio::spawn(update_all_playlists());
+	handle.await.unwrap();
 
 }

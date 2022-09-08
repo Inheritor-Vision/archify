@@ -2,10 +2,12 @@ use tokio_postgres;
 use serde_json::Value;
 use crate::authentication::{Token, AppToken};
 use std::time::{SystemTime, UNIX_EPOCH};
+use chrono::{DateTime, Utc};
 
 pub struct PublicPlaylist{
     pub id:  String,
     pub sha256:  Box<[u8]>,
+	pub timestamp: DateTime<Utc>,
     pub data:  Value
 }
 
@@ -29,7 +31,7 @@ async fn connect_db() -> tokio_postgres::Client{
 async fn create_tables(client: &mut tokio_postgres::Client){
 
 	let (_r1, _r2) = futures::join!(
-		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, playlist_data JSONB, PRIMARY KEY (playlist_id)) ", &[]),
+		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, ts)) ", &[]),
 		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (token_value TEXT, user_id TEXT, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id))", &[])
 	);
 
@@ -101,6 +103,7 @@ pub async fn get_all_public_playlists(client: &mut tokio_postgres::Client) -> Pu
 		let t = PublicPlaylist{
 			id: row.get("playlist_id"),
 			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
+			timestamp: row.get("timestamp"),
 			data: row.get("playlist_data")
 		};
 		res.push(t);
@@ -109,13 +112,31 @@ pub async fn get_all_public_playlists(client: &mut tokio_postgres::Client) -> Pu
 	res
 }
 
-pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: PublicPlaylist){
+pub async fn get_all_latest_public_playlists(client: &mut tokio_postgres::Client) -> PublicPlaylists{
+	let mut res = PublicPlaylists::new();
+	let r = client.query("SELECT DISTINCT ON (playlist_id) * FROM public_playlists ORDER BY playlist_id, timestamp DESC", &[]).await.unwrap();
+
+	for row in r{
+		let t = PublicPlaylist{
+			id: row.get("playlist_id"),
+			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
+			timestamp: row.get("timestamp"),
+			data: row.get("playlist_data")
+		};
+		res.push(t);
+	}
+
+	res
+}
+
+pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: &PublicPlaylist){
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		&playlist.id,
 		&&(*playlist.sha256),
+		&playlist.timestamp,
 		&playlist.data
 	];
-	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::BYTEA, $3::JSONB) ON CONFLICT (playlist_id) DO UPDATE SET playlist_sha256 = $2::BYTEA, playlist_data = $3::JSONB", params)
+	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::BYTEA, $3::TIMESTAMP, $4::JSONB) ON CONFLICT (playlist_id, timestamp) DO UPDATE SET playlist_sha256 = $2::BYTEA, playlist_data = $4::JSONB", params)
 		.await
 		.unwrap();
 }
