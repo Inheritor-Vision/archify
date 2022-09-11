@@ -1,8 +1,10 @@
 use std::sync::Arc;
+use std::process::exit;
 
 use crate::{authentication::Token, database::{PublicPlaylist, PublicPlaylists}};
 
 use chrono::Utc;
+use url::{Url};
 use sha2::{Sha256, Digest};
 use serde::{Deserialize};
 use serde_json::{Value};
@@ -90,4 +92,17 @@ pub async fn get_all_public_playlists(client: &Client, token: &Token, playlists:
 
 	res
 
+}
+
+pub fn parse_spotify_url(url: &String) -> String{
+	let parsed_url = Url::parse(url).unwrap();
+	let segments = parsed_url.path_segments().map(|c| c.collect::<Vec<_>>()).unwrap();
+	let res;
+	if segments[0] == "playlist"{
+		res = String::from(segments[1]);
+	}else{
+		println!("Error in parsing the URL");
+		exit(1);
+	}
+	res
 }

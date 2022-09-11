@@ -13,25 +13,31 @@ struct Cli {
 	add_playlist: Option<String>,
 	/// Update playlist stored in database
 	#[clap(short,long,action,value_parser)]
-	update: bool
+	update: bool,
+	/// Delete a playlist
+	#[clap(short,long,value_parser)]
+	delete_playlist: Option <String>,
 }
 
 pub enum Args {
 	NewUser(String),
 	NewPlaylist(String),
-	Update
+	DeletePlaylist(String),
+	Update,
 }
 
 pub fn parse_args() -> Args{
 	let cli = Cli::parse();
 	let res;
 
-	if cli.update && cli.add_user == None && cli.add_playlist == None {
+	if cli.update && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None{
 		res = Args::Update;
-	}else if !cli.update && cli.add_user != None && cli.add_playlist == None{
+	}else if !cli.update && cli.add_user != None && cli.add_playlist == None && cli.delete_playlist == None {
 		res = Args::NewUser(cli.add_user.unwrap());
-	}else if cli.update && cli.add_user == None && cli.add_playlist != None {
+	}else if !cli.update && cli.add_user == None && cli.add_playlist != None && cli.delete_playlist == None {
 		res = Args::NewPlaylist(cli.add_playlist.unwrap());
+	}else if !cli.update && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist != None {
+		res = Args::DeletePlaylist(cli.delete_playlist.unwrap());
 	}else{
 		let mut cmd = Cli::command();
 		cmd.error(

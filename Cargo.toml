@@ -16,6 +16,7 @@ tokio-postgres	= {version = "^0.7.7", features = ["with-serde_json-1", "with-chr
 sha2			= "^0.10.5"
 chrono			= "^0.4.22"
 clap			= {version = "^3.2.20", features = ["derive"]}
+url				= "^2.3.1"
 
 [features]
 proxy = []

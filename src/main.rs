@@ -57,24 +57,7 @@ fn create_client(headers: header::HeaderMap) -> Client{
 
 }
 
-async fn update_all_playlists(){
-
-	let headers = initialize_headers();
-	let mut client_spot = create_client(headers);
-	let app = String::from("archify");
-
-	let mut client = database::initiliaze_db().await;
-
-	let token = database::get_token(&mut client, &app).await; 
-	let token = match token {
-		Some(token) => token,
-		None => {
-			let l_t = authentication::get_token(&mut client_spot).await;
-			database::set_token(&mut client, &app, &l_t).await;
-			l_t
-		}
-	};
-
+async fn update_all_playlists(mut client: tokio_postgres::Client, client_spot: Client, token: authentication::Token){
 	
 	let playlists = database::get_all_latest_public_playlists(&mut client).await;
 	let received_playlists = spot_api::get_all_public_playlists(&client_spot, &token, &playlists).await;
@@ -94,14 +77,42 @@ async fn update_all_playlists(){
 
 }
 
+
+async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Client, token: authentication::Token, url: String){
+
+	let playlist_id = spot_api::parse_spotify_url(&url);
+
+	let playlist = spot_api::get_public_playlist(&client_spot, &token, &playlist_id).await;
+
+	database::set_public_playlist(&mut client, &playlist).await;
+
+}
+
 #[tokio::main]
 async fn main() {
 
+	let headers = initialize_headers();
+	let mut client_spot = create_client(headers);
+	let app = String::from("archify");
+
+	let mut client = database::initiliaze_db().await;
+
+	let token = database::get_token(&mut client, &app).await; 
+	let token = match token {
+		Some(token) => token,
+		None => {
+			let l_t = authentication::get_token(&mut client_spot).await;
+			database::set_token(&mut client, &app, &l_t).await;
+			l_t
+		}
+	};
+
 	let args = arguments::parse_args();
 	match args{
-		arguments::Args::Update => tokio::spawn(update_all_playlists()).await.unwrap(),
+		arguments::Args::Update => tokio::spawn(update_all_playlists(client, client_spot, token)).await.unwrap(),
 		arguments::Args::NewUser(_) => println!("Not available yet!"),
-		arguments::Args::NewPlaylist(_) => println!("Not available yet!"),
+		arguments::Args::NewPlaylist(url) => tokio::spawn(set_new_playlist(client, client_spot, token, url)).await.unwrap(),
+		arguments::Args::DeletePlaylist(_) => println!("Not available yet!"),
 	}
 
 }

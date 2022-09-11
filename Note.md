@@ -1,5 +1,11 @@
 # Note
 
+# TODO
+
+- Ad new playlist (share token from spotify, but not client from spot or db)
+
+# Knowledge
+
 ## Dashboard
 
 See [here](https://developer.spotify.com/dashboard/applications/01d4bc1059ff4078b507a6efff9910ae).
