@@ -32,7 +32,7 @@ async fn create_tables(client: &mut tokio_postgres::Client){
 
 	let (_r1, _r2) = futures::join!(
 		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, ts)) ", &[]),
-		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (token_value TEXT, user_id TEXT, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id))", &[])
+		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (token_value TEXT, user_id TEXT, is_app BOOL, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id))", &[])
 	);
 
 }
@@ -48,7 +48,7 @@ pub async fn initiliaze_db() -> tokio_postgres::Client{
 
 pub async fn get_token(client: &mut tokio_postgres::Client, user_id: &String) -> Option<Token>{
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[&user_id.as_str()];
-	let r = client.query_opt("SELECT token_value, duration, token_type, received_at FROM spotify_tokens WHERE user_id = $1::TEXT",&params);
+	let r = client.query_opt("SELECT token_value, duration, token_type, received_at, is_app FROM spotify_tokens WHERE user_id = $1::TEXT",&params);
 
 	let time = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
@@ -69,7 +69,8 @@ pub async fn get_token(client: &mut tokio_postgres::Client, user_id: &String) ->
 						expires_in: duration,
 						token_type: row.get("token_type")
 					},
-					received_at: received_at
+					received_at: received_at,
+					is_app: row.get("is_app"),
 				};
 				Some(t)	
 			}else{
@@ -85,12 +86,13 @@ pub async fn set_token(client: &mut tokio_postgres::Client, user_id: &String, to
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		&user_id.as_str(), 
 		&token.token.access_token.as_str(),
+		&token.is_app,
 		&token.token.token_type.as_str(),
 		&i64::try_from(token.token.expires_in).unwrap(),
 		&i64::try_from(token.received_at).unwrap()
 	];
 
-	let _r = client.execute("INSERT INTO spotify_tokens (user_id, token_value, token_type, duration, received_at) VALUES ($1::TEXT, $2::TEXT, $3::TEXT, $4::BIGINT, $5::BIGINT) ON CONFLICT (user_id) DO UPDATE SET token_value = $2::TEXT, token_type = $3::TEXT, duration = $4::BIGINT, received_at = $5::BIGINT", params)
+	let _r = client.execute("INSERT INTO spotify_tokens (user_id, token_value, is_app, token_type, duration, received_at) VALUES ($1::TEXT, $2::TEXT, $3::BOOL, $4::TEXT, $5::BIGINT, $6::BIGINT) ON CONFLICT (user_id) DO UPDATE SET token_value = $2::TEXT, is_app = $3::BOOL, token_type = $4::TEXT, duration = $5::BIGINT, received_at = $6::BIGINT", params)
 		.await
 		.unwrap();
 }

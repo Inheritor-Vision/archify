@@ -21,7 +21,8 @@ pub struct AppToken {
 #[derive(Clone)]
 pub struct Token {
 	pub token: AppToken,
-	pub received_at: u64
+	pub received_at: u64,
+	pub is_app: bool,
 }
 
 fn get_app_data() -> Value{
@@ -64,7 +65,8 @@ pub async fn get_token(client: &mut Client) -> Token{
 	let app_token: AppToken = serde_json::from_str(&body).unwrap();
 	let token = Token {
 		token: app_token,
-		received_at: time
+		received_at: time,
+		is_app: false,
 	};
 
 	token
