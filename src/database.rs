@@ -142,3 +142,16 @@ pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: 
 		.await
 		.unwrap();
 }
+
+pub async fn verify_client_id(client: &mut tokio_postgres::Client, client_id: &String) -> bool{
+	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
+		client_id
+	];
+
+	let r = client.query_opt("SELECT user_id FROM spotify_tokens WHERE user_id = $1::TEXT", params).await.unwrap();
+	
+	match r {
+		None => false,
+		Some(_) => true,
+	}
+}
