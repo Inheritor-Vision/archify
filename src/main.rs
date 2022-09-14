@@ -1,3 +1,5 @@
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng,Rng};
 use tokio;
 use reqwest::{Client, header};
 
@@ -77,7 +79,6 @@ async fn update_all_playlists(mut client: tokio_postgres::Client, client_spot: C
 
 }
 
-
 async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Client, token: authentication::Token, url: String){
 
 	let playlist_id = spot_api::parse_spotify_url(&url);
@@ -86,6 +87,25 @@ async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Clien
 
 	database::set_public_playlist(&mut client, &playlist).await;
 
+}
+
+pub async fn generate_new_client_id(client: &mut tokio_postgres::Client) -> String{
+	let mut client_id;
+	loop {
+
+		client_id = thread_rng()
+			.sample_iter(&Alphanumeric)
+			.take(32)
+			.map(char::from)
+			.collect();
+
+		if database::verify_client_id_unicity(client, &client_id).await {
+			break;
+		}
+	
+	}
+
+	client_id
 }
 
 #[tokio::main]
