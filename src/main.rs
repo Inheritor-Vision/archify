@@ -1,4 +1,3 @@
-use authentication::Token;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
 use serde_json::Value;
@@ -146,12 +145,12 @@ async fn main() {
 
 	let mut client = database::initiliaze_db().await;
 
-	let token = database::get_token(&mut client, &app).await; 
+	let token = database::get_access_token(&mut client, &app).await; 
 	let token = match token {
 		Some(token) => token,
 		None => {
 			let l_t = authentication::get_token(&mut client_spot).await;
-			database::set_token(&mut client, &app, &l_t).await;
+			database::set_access_token(&mut client, &app, &l_t).await;
 			l_t
 		}
 	};
