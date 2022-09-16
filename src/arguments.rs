@@ -24,6 +24,7 @@ pub enum Args {
 	NewPlaylist(String),
 	DeletePlaylist(String),
 	Update,
+	NewUserId,
 }
 
 pub fn parse_args() -> Args{

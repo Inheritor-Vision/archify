@@ -106,7 +106,9 @@ async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Clien
 
 }
 
-pub async fn get_client_id(){
+pub async fn get_client_id(app_data: Value) -> String{
+	let client_id = app_data["fd"].to_string();
+	client_id
 
 }
 
@@ -148,12 +150,15 @@ async fn main() {
 		}
 	};
 
+	let app_data = get_app_data();
+
 	let args = arguments::parse_args();
 	match args{
-		arguments::Args::Update => tokio::spawn(update_all_playlists(client, client_spot, token)).await.unwrap(),
 		arguments::Args::NewUser(_) => println!("Not available yet!"),
 		arguments::Args::NewPlaylist(url) => tokio::spawn(set_new_playlist(client, client_spot, token, url)).await.unwrap(),
 		arguments::Args::DeletePlaylist(_) => println!("Not available yet!"),
+		arguments::Args::Update => tokio::spawn(update_all_playlists(client, client_spot, token)).await.unwrap(),
+		arguments::Args::NewUserId => println!("{}", get_client_id(app_data).await),
 	}
 
 }
