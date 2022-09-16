@@ -91,7 +91,7 @@ async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Clien
 }
 
 
-pub async fn generate_new_client_id(client: &mut tokio_postgres::Client) -> String{
+pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String{
 	let mut client_id;
 	loop {
 
@@ -101,7 +101,7 @@ pub async fn generate_new_client_id(client: &mut tokio_postgres::Client) -> Stri
 			.map(char::from)
 			.collect();
 
-		if database::claim_new_client_id_unicity(client, &client_id).await {
+		if database::claim_new_user_id_unicity(client, &client_id).await {
 			break;
 		}
 	

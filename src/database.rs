@@ -31,8 +31,8 @@ async fn connect_db() -> tokio_postgres::Client{
 async fn create_tables(client: &mut tokio_postgres::Client){
 
 	let (_r1, _r2) = futures::join!(
-		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, ts)) ", &[]),
-		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (token_value TEXT, user_id TEXT, is_app BOOL, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id))", &[])
+		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, client_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, client_id, ts)) ", &[]),
+		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (refresh_token_value TEXT, user_id TEXT, access_token TEXT, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id))", &[])
 	);
 
 }
@@ -143,7 +143,7 @@ pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: 
 		.unwrap();
 }
 
-pub async fn claim_new_client_id_unicity(client: &mut tokio_postgres::Client, client_id: &String) -> bool{
+pub async fn claim_new_user_id_unicity(client: &mut tokio_postgres::Client, client_id: &String) -> bool{
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		client_id
 	];
