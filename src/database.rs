@@ -143,15 +143,17 @@ pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: 
 		.unwrap();
 }
 
-pub async fn verify_client_id_unicity(client: &mut tokio_postgres::Client, client_id: &String) -> bool{
+pub async fn claim_new_client_id_unicity(client: &mut tokio_postgres::Client, client_id: &String) -> bool{
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		client_id
 	];
 
-	let r = client.query_opt("SELECT user_id FROM spotify_tokens WHERE user_id = $1::TEXT", params).await.unwrap();
-	
+	let r = client.execute("INSERT INTO spotify_tokens (user_id) VALUES ($1::TEXT) ON CONFLICT (user_id) DO NOTHING", params).await.unwrap();
+
 	match r {
-		None => true,
-		Some(_) => false,
+		0 => false,
+		1 => true,
+		_ => panic!("[DATABASE] More than one row is affected!"),
 	}
+	
 }

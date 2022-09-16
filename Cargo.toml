@@ -17,6 +17,7 @@ sha2			= "^0.10.5"
 chrono			= "^0.4.22"
 clap			= {version = "^3.2.20", features = ["derive"]}
 url				= "^2.3.1"
+rand			= "^0.8.5"
 
 [features]
 proxy = []
