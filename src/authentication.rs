@@ -1,10 +1,9 @@
 use base64;
-use std::fs::File;
-use serde_json::{Value};
-use std::io::prelude::*;
 use serde::{Deserialize};
 use reqwest::{Client, header};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use crate::get_app_data;
 
 static FORM_TOKEN: [(&str, &str); 1] = 
 	[
@@ -23,19 +22,6 @@ pub struct Token {
 	pub token: AppToken,
 	pub received_at: u64,
 	pub is_app: bool,
-}
-
-fn get_app_data() -> Value{
-	let mut buff = String::new();
-	File::open("data/app_data.json")
-	.unwrap()
-	.read_to_string(&mut buff)
-	.unwrap();
-
-	let res: Value = serde_json::from_str(&*buff).unwrap();
-	
-	res
-
 }
 
 pub async fn get_token(client: &mut Client) -> Token{

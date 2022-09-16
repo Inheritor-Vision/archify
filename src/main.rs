@@ -1,11 +1,14 @@
 use authentication::Token;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
+use serde_json::Value;
 use tokio;
 use reqwest::{Client, header};
 
+use std::fs::File;
 #[cfg(feature = "proxy")]
 use std::fs::File;
+use std::io::Read;
 #[cfg(feature = "proxy")]
 use std::io::prelude::*;
 
@@ -19,6 +22,19 @@ static APP_USER_AGENT: &str = concat!(
 	"/",
 	env!("CARGO_PKG_VERSION")
 );
+
+fn get_app_data() -> Value{
+	let mut buff = String::new();
+	File::open("data/app_data.json")
+	.unwrap()
+	.read_to_string(&mut buff)
+	.unwrap();
+
+	let res: Value = serde_json::from_str(&*buff).unwrap();
+	
+	res
+
+}
 
 fn initialize_headers() -> header::HeaderMap{
 	let mut headers = header::HeaderMap::new();
@@ -90,6 +106,9 @@ async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Clien
 
 }
 
+pub async fn get_client_id(){
+
+}
 
 pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String{
 	let mut client_id;
