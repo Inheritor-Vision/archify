@@ -1,6 +1,6 @@
 use tokio_postgres;
 use serde_json::Value;
-use crate::authentication::{Token, AppToken};
+use crate::{authentication::{Token, AppToken}, get_app_data};
 use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Utc};
 
@@ -14,7 +14,10 @@ pub struct PublicPlaylist{
 pub type PublicPlaylists = Vec<PublicPlaylist>;
 
 async fn connect_db() -> tokio_postgres::Client{
-	let (client, connection) = tokio_postgres::connect("host=localhost user=archify-user dbname=archify-db", tokio_postgres::NoTls)
+	let app_data = get_app_data();
+	let config = format!("host={0} user={1} dbname={2}", app_data["host"], app_data["user"], app_data["dbname"]);
+
+	let (client, connection) = tokio_postgres::connect(config.as_str(), tokio_postgres::NoTls)
 	.await
 	.unwrap();
 
