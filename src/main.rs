@@ -114,6 +114,12 @@ pub async fn get_client_id(app_data: Value) -> String{
 
 pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String{
 	let mut client_id;
+	let cookie = thread_rng()
+		.sample_iter(&Alphanumeric)
+		.take(64)
+		.map(char::from)
+		.collect();
+
 	loop {
 
 		client_id = thread_rng()
@@ -122,7 +128,7 @@ pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String
 			.map(char::from)
 			.collect();
 
-		if database::claim_new_user_id_unicity(client, &client_id).await {
+		if database::claim_new_user_id_unicity(client, &client_id, &cookie).await {
 			break;
 		}
 	
