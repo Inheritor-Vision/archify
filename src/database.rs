@@ -153,7 +153,7 @@ pub async fn claim_new_user_id_unicity(client: &mut tokio_postgres::Client, clie
 		cookie,
 	];
 
-	let r = client.execute("INSERT INTO users (user_id, cookie) VALUES ($1::TEXT, $2::TEXT) ON CONFLICT (user_id, cookie) DO NOTHING", params).await.unwrap();
+	let r = client.execute("INSERT INTO users (user_id, cookie) VALUES ($1::TEXT, $2::TEXT) ON CONFLICT (user_id) DO NOTHING", params).await.unwrap();
 
 	match r {
 		0 => false,
