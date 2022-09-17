@@ -37,7 +37,7 @@ async fn create_tables(client: &mut tokio_postgres::Client){
 		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, ts)) ", &[]),
 		client.execute("CREATE TABLE IF NOT EXISTS private_playlists (playlist_id TEXT, user_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, user_id, ts), CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(user_id)) ", &[]),
 		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (refresh_token_value TEXT, user_id TEXT, access_token_value TEXT, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id), CONSTRAINT fk_user_id FOREIGN KEY(users_id) REFERENCES users(user_id))", &[]),
-		client.execute("CREATE TABLE IF NOT EXISTS users (client_id TEXT, cookie TEXT, PRIMARY KEY (user_id))", &[]),
+		client.execute("CREATE TABLE IF NOT EXISTS users (client_id TEXT, spot_id TEXT, cookie TEXT, PRIMARY KEY (user_id))", &[]),
 	);
 
 }
