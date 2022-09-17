@@ -24,7 +24,7 @@ pub struct Token {
 	pub is_app: bool,
 }
 
-pub async fn get_token(client: &mut Client) -> Token{
+pub async fn get_app_token(client: &mut Client) -> Token{
 	let mut headers = header::HeaderMap::new();
 	let app_data = get_app_data();
 

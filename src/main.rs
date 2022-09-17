@@ -136,6 +136,8 @@ pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String
 	client_id
 }
 
+
+
 #[tokio::main]
 async fn main() {
 
@@ -149,7 +151,7 @@ async fn main() {
 	let token = match token {
 		Some(token) => token,
 		None => {
-			let l_t = authentication::get_token(&mut client_spot).await;
+			let l_t = authentication::get_app_token(&mut client_spot).await;
 			database::set_access_token(&mut client, &app, &l_t).await;
 			l_t
 		}
