@@ -1,6 +1,6 @@
 use tokio_postgres;
 use serde_json::Value;
-use crate::{authentication::{Token, AppToken}, get_app_data};
+use crate::{authentication::{Token, AppToken, FullToken}, get_app_data};
 use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Utc};
 
@@ -68,7 +68,7 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 		Some(row) => {
 			let received_at = u64::try_from(row.get::<&str,i64>("received_at")).unwrap();
 			let duration = u64::try_from(row.get::<&str,i64>("duration")).unwrap();
-			if !row.is_empty() {
+			if !row.is_empty(){
 				let t = Token {
 					token: AppToken{
 						access_token: row.get("access_token_value"),
@@ -88,6 +88,40 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 	token
 }
 
+pub async fn get_full_token(client: &mut tokio_postgres::Client, user_id: &String) -> Option<FullToken>{
+
+	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[&user_id.as_str()];
+	let r = client.query_opt("SELECT * FROM spotify_tokens WHERE user_id = $1::TEXT",&params)
+		.await
+		.unwrap();
+
+	let token = match r {
+		None => None,
+		Some(row) => {
+			let received_at = u64::try_from(row.get::<&str,i64>("received_at")).unwrap();
+			let duration = u64::try_from(row.get::<&str,i64>("duration")).unwrap();
+			if !row.is_empty() {
+				let t = FullToken{
+					access_token: Token {
+						token: AppToken{
+							access_token: row.get("access_token_value"),
+							expires_in: duration,
+							token_type: row.get("token_type")
+						},
+						received_at: received_at,
+						client_id: user_id.clone(),
+					},
+					refresh_token: row.get("refresh_token"),
+				};
+				Some(t)	
+			}else{
+				None
+			}
+		}
+	};
+
+	token
+}
 
 pub async fn update_access_token(client: &mut tokio_postgres::Client, user_id: &String, token: &Token){
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
