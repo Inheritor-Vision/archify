@@ -1,7 +1,6 @@
 use tokio_postgres;
 use serde_json::Value;
 use crate::{authentication::{Token, AppToken, FullToken}, get_app_data};
-use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Utc};
 
 pub struct PublicPlaylist {
