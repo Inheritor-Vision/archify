@@ -96,7 +96,7 @@ pub async fn update_access_token(client: &mut tokio_postgres::Client, user_id: &
 		&i64::try_from(token.received_at).unwrap()
 	];
 
-	let _r = client.execute("UPDATE spotify_tokens SET (user_id, access_token_value, token_type, duration, received_at) = ($1::TEXT, $2::TEXT, $3::BOOL, $4::TEXT, $5::BIGINT, $6::BIGINT)", params)
+	let _r = client.execute("UPDATE spotify_tokens SET (user_id, access_token_value, token_type, duration, received_at) = ($1::TEXT, $2::TEXT, $3::BOOL, $4::TEXT, $5::BIGINT, $6::BIGINT) WHERE user_id = $1::TEXT", params)
 		.await
 		.unwrap();
 }
