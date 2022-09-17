@@ -12,16 +12,16 @@ static FORM_TOKEN: [(&str, &str); 1] =
 
 #[derive(Deserialize, Clone)]
 pub struct AppToken {
-    pub access_token:  String,
-    pub expires_in:  u64,
-    pub token_type:  String
+    pub access_token: String,
+    pub expires_in: u64,
+    pub token_type: String,
 }
 
 #[derive(Clone)]
 pub struct Token {
 	pub token: AppToken,
 	pub received_at: u64,
-	pub is_app: bool,
+	pub client_id: String,
 }
 
 pub async fn get_app_token(client: &mut Client) -> Token{
@@ -52,7 +52,7 @@ pub async fn get_app_token(client: &mut Client) -> Token{
 	let token = Token {
 		token: app_token,
 		received_at: time,
-		is_app: false,
+		client_id: app_data["client_id"].to_string(), 
 	};
 
 	token
