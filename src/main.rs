@@ -1,4 +1,4 @@
-use authentication::{get_user_tokens_from_code, Token};
+use authentication::{get_user_tokens_from_code, Token, FullToken};
 use database::{veriy_user_from_spot_id, User};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
@@ -167,6 +167,18 @@ fn is_access_token_expired(token: &Token) -> bool {
 		.unwrap()
 		.as_secs();
 	if time < token.received_at + token.token.expires_in {
+		true
+	}else{
+		false
+	}
+}
+
+fn is_full_token_expired(token: &FullToken) -> bool {
+	let time = SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.unwrap()
+		.as_secs();
+	if time < token.access_token.received_at + token.access_token.token.expires_in {
 		true
 	}else{
 		false
