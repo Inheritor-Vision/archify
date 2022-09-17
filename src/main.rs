@@ -2,6 +2,7 @@ use authentication::get_user_tokens_from_code;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
 use serde_json::Value;
+use spot_api::get_spot_id;
 use tokio;
 use reqwest::{Client, header};
 
@@ -137,11 +138,12 @@ pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String
 	client_id
 }
 
-pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_spot: Client, token: authentication::Token, code: String, redirect_uri: String){
+pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_spot: Client, code: String, redirect_uri: String){
 
 	let token = get_user_tokens_from_code(&mut client_spot, &code, &redirect_uri).await;
 
-
+	//Immediatly verify if user has already been connected
+	let spot_id = get_spot_id(&client_spot, &token.access_token).await;
 
 
 }

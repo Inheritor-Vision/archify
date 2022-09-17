@@ -8,7 +8,7 @@ use url::{Url};
 use sha2::{Sha256, Digest};
 use serde::{Deserialize};
 use serde_json::{Value};
-use reqwest::{Client, header};
+use reqwest::{Client, header::{self, HeaderMap}};
 
 #[derive(Deserialize)]
 struct Id{
@@ -28,6 +28,40 @@ struct Items {
 #[derive(Deserialize)]
 struct Tracks{
 	tracks: Items
+}
+
+fn add_user_authorization(headers: &mut header::HeaderMap, token: &Token){
+	let auth_value = format!("Basic {}", token.token.access_token);
+
+	let mut auth = header::HeaderValue::from_str(&auth_value).unwrap();
+	auth.set_sensitive(true);
+
+	headers.insert(header::AUTHORIZATION, auth);
+}
+
+pub async fn get_spot_id(client: &Client, token: &Token) -> String {
+	let mut headers = HeaderMap::new();
+	let uri = "https://api.spotify.com/v1/me";
+
+	add_user_authorization(&mut headers, &token);
+
+	let timestamp = Utc::now();
+
+	let body = client.get(uri)
+		.headers(headers)
+		.send()
+		.await 
+		.unwrap()
+		.text()
+		.await
+		.unwrap();
+	
+	let json_raw: Value = serde_json::from_str(body.as_str()).unwrap();
+
+	let res = json_raw["id"].to_string();
+
+	res
+
 }
 
 pub async fn get_public_playlist(client: &Client, token: &Token, playlist_id: &String) -> PublicPlaylist{

@@ -43,7 +43,8 @@ pub async fn get_authorize_code(client: &mut tokio_postgres::Client, client_spot
 			.as_str())
 		.unwrap();
 
-	let scope = header::HeaderValue::from_str(String::from("playlist-modify-private playlist-read-private playlist-read-collaborative user-read-private")
+	//let scope = header::HeaderValue::from_str(String::from("playlist-read-private playlist-read-public playlist-read-collaborative user-follow-read user-library-read") // Maybe user-read-private for search ????
+	let scope = header::HeaderValue::from_str(String::from("user-read-private user-read-email") // Maybe user-read-private for search ????
 			.as_str())
 		.unwrap();
 
