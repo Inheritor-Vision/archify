@@ -34,16 +34,16 @@ pub fn parse_args() -> Args{
 	let cli = Cli::parse();
 	let res;
 
-	if cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist == None && cli.delete_playlist == None{
+	if cli.update {
 		res = Args::Update;
-	}else if !cli.update && !cli.get_client_id && cli.add_user != None && cli.add_public_playlist == None && cli.delete_playlist == None {
+	}else if cli.add_user != None {
 		let v = cli.add_user.unwrap();
 		res = Args::NewUser(v[0].clone(), v[1].clone());
-	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist != None && cli.delete_playlist == None {
+	}else if cli.add_public_playlist != None {
 		res = Args::NewPublicPlaylist(cli.add_public_playlist.unwrap());
-	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist == None && cli.delete_playlist != None {
+	}else if cli.delete_playlist != None {
 		res = Args::DeletePlaylist(cli.delete_playlist.unwrap());
-	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist == None && cli.delete_playlist == None {
+	}else if cli.get_client_id {
 		res = Args::GetClientId;
 	}else{
 		let mut cmd = Cli::command();
