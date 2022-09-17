@@ -5,15 +5,15 @@ use clap::{Parser, ErrorKind, CommandFactory};
 #[clap(version)]
 #[clap(about = "Tool that will periodically save user personnal playlist and public playlists. It is aimed at keeping record of temporary playlist like Weekly Discovery, made by Spotify, or public playlist.", long_about = None)]
 struct Cli {
-	/// Launch user register process
-	#[clap(long, value_parser)]
-	add_user: Option<String>,
+	/// Launch user register authorization process. Need Auth code & used redirect url
+	#[clap(long, value_parser, min_values = 2, max_values = 2)]
+	add_user: Option<Vec<String>>,
 	/// Add public playlist to archive
 	#[clap(long, value_parser)]
 	add_playlist: Option<String>,
-	/// Update playlist stored in database
+	/// Get ID of the app for spotify API
 	#[clap(long,action,value_parser)]
-	new_user_id: bool,
+	get_client_id: bool,
 	/// Update playlist stored in database
 	#[clap(short,long,action,value_parser)]
 	update: bool,
@@ -23,27 +23,28 @@ struct Cli {
 }
 
 pub enum Args {
-	NewUser(String),
+	NewUser(String, String),
 	NewPlaylist(String),
 	DeletePlaylist(String),
 	Update,
-	NewUserId,
+	GetClientId,
 }
 
 pub fn parse_args() -> Args{
 	let cli = Cli::parse();
 	let res;
 
-	if cli.update && !cli.new_user_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None{
+	if cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None{
 		res = Args::Update;
-	}else if !cli.update && !cli.new_user_id && cli.add_user != None && cli.add_playlist == None && cli.delete_playlist == None {
-		res = Args::NewUser(cli.add_user.unwrap());
-	}else if !cli.update && !cli.new_user_id && cli.add_user == None && cli.add_playlist != None && cli.delete_playlist == None {
+	}else if !cli.update && !cli.get_client_id && cli.add_user != None && cli.add_playlist == None && cli.delete_playlist == None {
+		let v = cli.add_user.unwrap();
+		res = Args::NewUser(v[0].clone(), v[1].clone());
+	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist != None && cli.delete_playlist == None {
 		res = Args::NewPlaylist(cli.add_playlist.unwrap());
-	}else if !cli.update && !cli.new_user_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist != None {
+	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist != None {
 		res = Args::DeletePlaylist(cli.delete_playlist.unwrap());
-	}else if !cli.update && !cli.new_user_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None {
-		res = Args::NewUserId;
+	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None {
+		res = Args::GetClientId;
 	}else{
 		let mut cmd = Cli::command();
 		cmd.error(

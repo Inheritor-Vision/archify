@@ -109,7 +109,7 @@ async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Clien
 }
 
 pub async fn get_client_id(app_data: Value) -> String{
-	let client_id = app_data["fd"].to_string();
+	let client_id = app_data["client_id"].to_string();
 	client_id
 
 }
@@ -144,7 +144,7 @@ pub async fn generate_new_user(client: &mut tokio_postgres::Client, spot_id: Str
 
 }
 
-pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_spot: Client, code: String, redirect_uri: String){
+pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_spot: Client, code: String, redirect_uri: String) -> String {
 
 	let token = get_user_tokens_from_code(&mut client_spot, &code, &redirect_uri).await;
 
@@ -155,6 +155,8 @@ pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_sp
 		None => generate_new_user(&mut client, spot_id).await,
 		Some(user) => user,
 	};
+
+	user.cookie
 
 }
 
@@ -181,11 +183,11 @@ async fn main() {
 
 	let args = arguments::parse_args();
 	match args{
-		arguments::Args::NewUser(_) => println!("Not available yet!"),
+		arguments::Args::NewUser(code, redirect_uri) => println!("Cookie: {}", authenticate_user(client, client_spot, code, redirect_uri).await),
 		arguments::Args::NewPlaylist(url) => tokio::spawn(set_new_playlist(client, client_spot, token, url)).await.unwrap(),
 		arguments::Args::DeletePlaylist(_) => println!("Not available yet!"),
 		arguments::Args::Update => tokio::spawn(update_all_playlists(client, client_spot, token)).await.unwrap(),
-		arguments::Args::NewUserId => println!("{}", get_client_id(app_data).await),
+		arguments::Args::GetClientId => println!("{}", get_client_id(app_data).await),
 	}
 
 }
