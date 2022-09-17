@@ -1,4 +1,4 @@
-use authentication::get_user_tokens_from_code;
+use authentication::{get_user_tokens_from_code, Token};
 use database::{veriy_user_from_spot_id, User};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
@@ -13,6 +13,7 @@ use std::fs::File;
 use std::io::Read;
 #[cfg(feature = "proxy")]
 use std::io::prelude::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod authentication;
 mod database;
@@ -158,6 +159,18 @@ pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_sp
 
 	user.cookie
 
+}
+
+fn is_access_token_expired(token: &Token) -> bool {
+	let time = SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.unwrap()
+		.as_secs();
+	if time < token.received_at + token.token.expires_in {
+		true
+	}else{
+		false
+	}
 }
 
 #[tokio::main]
