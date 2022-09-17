@@ -2,7 +2,14 @@
 
 # TODO
 
-- Ad new playlist (share token from spotify, but not client from spot or db)
+- Change the way // request are done. [doc](https://docs.rs/reqwest/latest/reqwest/struct.Client.html) state that is use Arc internally. Better do something like 10 spawns that share the work (divided in 10 then). Fist get the number of tracks of all playlist, then divide the work betwenn them. Indeed, for now it doesn ot work because if there is a huge amount track in the playlist, then spotify api will only return part of it. Offset & limit will ahve to be used. Better defined limit to know how much tracks will be returned. Try to find the maximum.
+- By default, archive all playlist followed by a user
+- Find how to show a playlist to a user (Put a playlist in the user account but need modify rights, Create a playlist from archify account (maybe use the family account I have) and share it with the user or simply give the list on the site)
+- Handle errors (from spotify API, from posgre data base and Rust in general (aka unwrap))
+- Get private playlist (try to find a way to distinguish between private and public to avoid giving the token for nothing)
+- Actually test everything
+- Refactor code
+- Create the library and the server
 
 # Knowledge
 

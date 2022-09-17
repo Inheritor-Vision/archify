@@ -12,6 +12,16 @@ pub struct PublicPlaylist {
 
 pub type PublicPlaylists = Vec<PublicPlaylist>;
 
+pub struct PrivatePlaylist {
+    pub id:  String,
+	pub user_id: String,
+    pub sha256:  Box<[u8]>,
+	pub timestamp: DateTime<Utc>,
+    pub data:  Value
+}
+
+pub type PrivatePlaylists = Vec<PrivatePlaylist>;
+
 pub struct User {
 	pub user_id: String,
 	pub spot_id: String,
@@ -150,22 +160,41 @@ pub async fn set_full_token(client: &mut tokio_postgres::Client, user_id: &Strin
 		.unwrap();
 }
 
-pub async fn get_all_public_playlists(client: &mut tokio_postgres::Client) -> PublicPlaylists{
-	let mut res = PublicPlaylists::new();
-	let r = client.query("SELECT * FROM public_playlists", &[]).await.unwrap();
-
-	for row in r{
-		let t = PublicPlaylist{
-			id: row.get("playlist_id"),
-			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
-			timestamp: row.get("timestamp"),
-			data: row.get("playlist_data")
-		};
-		res.push(t);
-	}
-
-	res
-}
+// Outdated because there is multiple version of a playlist (That is the principle of this application)
+// pub async fn get_all_public_playlists(client: &mut tokio_postgres::Client) -> PublicPlaylists{
+// 	let mut res = PublicPlaylists::new();
+// 	let r = client.query("SELECT * FROM public_playlists", &[]).await.unwrap();
+// 
+// 	for row in r{
+// 		let t = PublicPlaylist{
+// 			id: row.get("playlist_id"),
+// 			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
+// 			timestamp: row.get("timestamp"),
+// 			data: row.get("playlist_data")
+// 		};
+// 		res.push(t);
+// 	}
+// 
+// 	res
+// }
+// 
+// pub async fn get_all_private_playlists(client: &mut tokio_postgres::Client) -> PrivatePlaylists{
+// 	let mut res = PrivatePlaylists::new();
+// 	let r = client.query("SELECT * FROM private_playlists", &[]).await.unwrap();
+// 
+// 	for row in r{
+// 		let t = PrivatePlaylist{
+// 			id: row.get("playlist_id"),
+// 			user_id: row.get("user_id"),
+// 			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
+// 			timestamp: row.get("timestamp"),
+// 			data: row.get("playlist_data")
+// 		};
+// 		res.push(t);
+// 	}
+// 
+// 	res
+// }
 
 pub async fn get_all_latest_public_playlists(client: &mut tokio_postgres::Client) -> PublicPlaylists{
 	let mut res = PublicPlaylists::new();
@@ -184,6 +213,24 @@ pub async fn get_all_latest_public_playlists(client: &mut tokio_postgres::Client
 	res
 }
 
+pub async fn get_all_latest_private_playlists(client: &mut tokio_postgres::Client) -> PrivatePlaylists{
+	let mut res = PrivatePlaylists::new();
+	let r = client.query("SELECT DISTINCT ON (playlist_id) * FROM private_playlists ORDER BY playlist_id, timestamp DESC", &[]).await.unwrap();
+
+	for row in r{
+		let t = PrivatePlaylist{
+			id: row.get("playlist_id"),
+			user_id: row.get("user_id"),
+			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
+			timestamp: row.get("timestamp"),
+			data: row.get("playlist_data")
+		};
+		res.push(t);
+	}
+
+	res
+}
+
 pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: &PublicPlaylist){
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		&playlist.id,
@@ -191,7 +238,20 @@ pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: 
 		&playlist.timestamp,
 		&playlist.data
 	];
-	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::BYTEA, $3::TIMESTAMP, $4::JSONB) ON CONFLICT (playlist_id, timestamp) DO UPDATE SET playlist_sha256 = $2::BYTEA, playlist_data = $4::JSONB", params)
+	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::BYTEA, $3::TIMESTAMP, $4::JSONB)", params)
+		.await
+		.unwrap();
+}
+
+pub async fn set_private_playlist(client: &mut tokio_postgres::Client, playlist: &PrivatePlaylist, user_id: &String){
+	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
+		&playlist.id,
+		&user_id,
+		&&(*playlist.sha256),
+		&playlist.timestamp,
+		&playlist.data
+	];
+	let _r = client.execute("INSERT INTO private_playlists VALUES ($1::TEXT, $2::TEXT, $3::BYTEA, $4::TIMESTAMP, $5::JSONB)", params)
 		.await
 		.unwrap();
 }
