@@ -158,7 +158,7 @@ pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_sp
 	};
 
 	// Update FullToken anyway because a new refresh token has been issued
-	set_full_token(&mut client, &user.user_id, &token);
+	set_full_token(&mut client, &user.user_id, &token).await;
 
 	user.cookie
 
