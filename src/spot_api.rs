@@ -45,8 +45,6 @@ pub async fn get_spot_id(client: &Client, token: &Token) -> String {
 
 	add_user_authorization(&mut headers, &token);
 
-	let timestamp = Utc::now();
-
 	let body = client.get(uri)
 		.headers(headers)
 		.send()
