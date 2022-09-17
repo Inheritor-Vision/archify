@@ -4,7 +4,7 @@ use crate::{authentication::{Token, AppToken}, get_app_data};
 use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Utc};
 
-pub struct PublicPlaylist{
+pub struct PublicPlaylist {
     pub id:  String,
     pub sha256:  Box<[u8]>,
 	pub timestamp: DateTime<Utc>,
@@ -12,6 +12,12 @@ pub struct PublicPlaylist{
 }
 
 pub type PublicPlaylists = Vec<PublicPlaylist>;
+
+pub struct User {
+	pub user_id: String,
+	pub spot_id: String,
+	pub cookie: String,
+}
 
 async fn connect_db() -> tokio_postgres::Client{
 	let app_data = get_app_data();
@@ -147,13 +153,14 @@ pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: 
 		.unwrap();
 }
 
-pub async fn claim_new_user_id_unicity(client: &mut tokio_postgres::Client, client_id: &String, cookie: &String) -> bool{
+pub async fn claim_new_user_id_unicity(client: &mut tokio_postgres::Client, user_id: &String, spot_id: &String, cookie: &String) -> bool{
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
-		client_id,
+		user_id,
+		spot_id,
 		cookie,
 	];
 
-	let r = client.execute("INSERT INTO users (user_id, cookie) VALUES ($1::TEXT, $2::TEXT) ON CONFLICT (user_id) DO NOTHING", params).await.unwrap();
+	let r = client.execute("INSERT INTO users (user_id, spot_id, cookie) VALUES ($1::TEXT, $2::TEXT, $3::TEXT) ON CONFLICT (user_id) DO NOTHING", params).await.unwrap();
 
 	match r {
 		0 => false,
@@ -161,4 +168,28 @@ pub async fn claim_new_user_id_unicity(client: &mut tokio_postgres::Client, clie
 		_ => panic!("[DATABASE] More than one row is affected!"),
 	}
 	
+}
+
+pub async fn veriy_user_from_spot_id(client: &mut tokio_postgres::Client, spot_id: &String) -> Option<User> {
+	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
+		spot_id,
+	];
+
+	let r = client.query_opt("SELECT * FROM users WHERE spot_id = $1::TEXT", params)
+		.await
+		.unwrap();
+
+	let res = match r {
+		None => None,
+		Some(row) => Some(
+			User {
+				user_id: row.get("user_id"),
+				spot_id: row.get("spot_id"),
+				cookie: row.get("cookie"),
+			}
+		)
+	};
+
+	res
+
 }

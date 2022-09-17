@@ -1,4 +1,5 @@
 use authentication::get_user_tokens_from_code;
+use database::{veriy_user_from_spot_id, User};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
 use serde_json::Value;
@@ -113,9 +114,9 @@ pub async fn get_client_id(app_data: Value) -> String{
 
 }
 
-pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String{
-	let mut client_id;
-	let cookie = thread_rng()
+pub async fn generate_new_user(client: &mut tokio_postgres::Client, spot_id: String) -> User{
+	let mut user_id: String;
+	let cookie: String = thread_rng()
 		.sample_iter(&Alphanumeric)
 		.take(64)
 		.map(char::from)
@@ -123,19 +124,24 @@ pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String
 
 	loop {
 
-		client_id = thread_rng()
+		user_id = thread_rng()
 			.sample_iter(&Alphanumeric)
 			.take(32)
 			.map(char::from)
 			.collect();
 
-		if database::claim_new_user_id_unicity(client, &client_id, &cookie).await {
+		if database::claim_new_user_id_unicity(client, &user_id, &spot_id, &cookie).await {
 			break;
 		}
 	
 	}
 
-	client_id
+	User{
+		user_id: user_id,
+		spot_id: spot_id,
+		cookie: cookie
+	}
+
 }
 
 pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_spot: Client, code: String, redirect_uri: String){
@@ -145,6 +151,10 @@ pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_sp
 	//Immediatly verify if user has already been connected
 	let spot_id = get_spot_id(&client_spot, &token.access_token).await;
 
+	let user = match veriy_user_from_spot_id(&mut client, &spot_id).await {
+		None => generate_new_user(&mut client, spot_id).await,
+		Some(user) => user,
+	};
 
 }
 
