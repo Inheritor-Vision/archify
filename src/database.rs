@@ -61,11 +61,6 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[&user_id.as_str()];
 	let r = client.query_opt("SELECT access_token_value, duration, token_type, received_at FROM spotify_tokens WHERE user_id = $1::TEXT",&params);
 
-	let time = SystemTime::now()
-		.duration_since(UNIX_EPOCH)
-		.unwrap()
-		.as_secs();
-
 	let r = r.await.unwrap();
 
 	let token = match r {
@@ -73,7 +68,7 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 		Some(row) => {
 			let received_at = u64::try_from(row.get::<&str,i64>("received_at")).unwrap();
 			let duration = u64::try_from(row.get::<&str,i64>("duration")).unwrap();
-			if !row.is_empty() && (duration + received_at > time){
+			if !row.is_empty() {
 				let t = Token {
 					token: AppToken{
 						access_token: row.get("access_token_value"),
@@ -92,6 +87,7 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 
 	token
 }
+
 
 pub async fn update_access_token(client: &mut tokio_postgres::Client, user_id: &String, token: &Token){
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[

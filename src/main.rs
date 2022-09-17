@@ -196,7 +196,15 @@ async fn main() {
 
 	let token = database::get_access_token(&mut client, &app).await; 
 	let token = match token {
-		Some(token) => token,
+		Some(token) => {
+			if is_access_token_expired(&token){
+				let l_t = authentication::get_app_token(&mut client_spot).await;
+				database::update_access_token(&mut client, &app, &l_t).await;
+				l_t
+			}else{
+				token
+			}
+		},
 		None => {
 			let l_t = authentication::get_app_token(&mut client_spot).await;
 			database::update_access_token(&mut client, &app, &l_t).await;
