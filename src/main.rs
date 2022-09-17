@@ -99,7 +99,7 @@ async fn update_all_playlists(mut client: tokio_postgres::Client, client_spot: C
 
 }
 
-async fn set_new_playlist(mut client: tokio_postgres::Client, client_spot: Client, token: authentication::Token, url: String){
+async fn set_new_public_playlist(mut client: tokio_postgres::Client, client_spot: Client, token: authentication::Token, url: String){
 
 	let playlist_id = spot_api::parse_spotify_url(&url);
 
@@ -220,7 +220,7 @@ async fn main() {
 	let args = arguments::parse_args();
 	match args{
 		arguments::Args::NewUser(code, redirect_uri) => println!("Cookie: {}", authenticate_user(client, client_spot, code, redirect_uri).await),
-		arguments::Args::NewPlaylist(url) => tokio::spawn(set_new_playlist(client, client_spot, token, url)).await.unwrap(),
+		arguments::Args::NewPublicPlaylist(url) => tokio::spawn(set_new_public_playlist(client, client_spot, token, url)).await.unwrap(),
 		arguments::Args::DeletePlaylist(_) => println!("Not available yet!"),
 		arguments::Args::Update => tokio::spawn(update_all_playlists(client, client_spot, token)).await.unwrap(),
 		arguments::Args::GetClientId => println!("{}", get_client_id(app_data).await),

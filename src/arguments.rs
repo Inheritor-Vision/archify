@@ -10,7 +10,7 @@ struct Cli {
 	add_user: Option<Vec<String>>,
 	/// Add public playlist to archive
 	#[clap(long, value_parser)]
-	add_playlist: Option<String>,
+	add_public_playlist: Option<String>,
 	/// Get ID of the app for spotify API
 	#[clap(long,action,value_parser)]
 	get_client_id: bool,
@@ -24,7 +24,7 @@ struct Cli {
 
 pub enum Args {
 	NewUser(String, String),
-	NewPlaylist(String),
+	NewPublicPlaylist(String),
 	DeletePlaylist(String),
 	Update,
 	GetClientId,
@@ -34,16 +34,16 @@ pub fn parse_args() -> Args{
 	let cli = Cli::parse();
 	let res;
 
-	if cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None{
+	if cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist == None && cli.delete_playlist == None{
 		res = Args::Update;
-	}else if !cli.update && !cli.get_client_id && cli.add_user != None && cli.add_playlist == None && cli.delete_playlist == None {
+	}else if !cli.update && !cli.get_client_id && cli.add_user != None && cli.add_public_playlist == None && cli.delete_playlist == None {
 		let v = cli.add_user.unwrap();
 		res = Args::NewUser(v[0].clone(), v[1].clone());
-	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist != None && cli.delete_playlist == None {
-		res = Args::NewPlaylist(cli.add_playlist.unwrap());
-	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist != None {
+	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist != None && cli.delete_playlist == None {
+		res = Args::NewPublicPlaylist(cli.add_public_playlist.unwrap());
+	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist == None && cli.delete_playlist != None {
 		res = Args::DeletePlaylist(cli.delete_playlist.unwrap());
-	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_playlist == None && cli.delete_playlist == None {
+	}else if !cli.update && !cli.get_client_id && cli.add_user == None && cli.add_public_playlist == None && cli.delete_playlist == None {
 		res = Args::GetClientId;
 	}else{
 		let mut cmd = Cli::command();
