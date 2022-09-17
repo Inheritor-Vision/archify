@@ -9,8 +9,8 @@ struct Cli {
 	#[clap(long, value_parser, min_values = 2, max_values = 2)]
 	add_user: Option<Vec<String>>,
 	/// Add public playlist to archive
-	#[clap(long, value_parser)]
-	add_public_playlist: Option<String>,
+	#[clap(long, value_parser, min_values = 1, max_values = 2)]
+	add_playlist: Option<Vec<String>>,
 	/// Get ID of the app for spotify API
 	#[clap(long,action,value_parser)]
 	get_client_id: bool,
@@ -24,7 +24,7 @@ struct Cli {
 
 pub enum Args {
 	NewUser(String, String),
-	NewPublicPlaylist(String),
+	NewPlaylist(Vec<String>),
 	DeletePlaylist(String),
 	Update,
 	GetClientId,
@@ -39,8 +39,8 @@ pub fn parse_args() -> Args{
 	}else if cli.add_user != None {
 		let v = cli.add_user.unwrap();
 		res = Args::NewUser(v[0].clone(), v[1].clone());
-	}else if cli.add_public_playlist != None {
-		res = Args::NewPublicPlaylist(cli.add_public_playlist.unwrap());
+	}else if cli.add_playlist != None {
+		res = Args::NewPlaylist(cli.add_playlist.unwrap());
 	}else if cli.delete_playlist != None {
 		res = Args::DeletePlaylist(cli.delete_playlist.unwrap());
 	}else if cli.get_client_id {
