@@ -1,3 +1,4 @@
+use authentication::get_user_tokens_from_code;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
 use serde_json::Value;
@@ -136,7 +137,12 @@ pub async fn generate_new_user_id(client: &mut tokio_postgres::Client) -> String
 	client_id
 }
 
+pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_spot: Client, token: authentication::Token, code: String, redirect_uri: String){
 
+	let token = get_user_tokens_from_code(&mut client_spot, &code, &redirect_uri).await;
+
+
+}
 
 #[tokio::main]
 async fn main() {
