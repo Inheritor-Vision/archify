@@ -1,5 +1,5 @@
 use authentication::{get_user_tokens_from_code, Token, FullToken};
-use database::{veriy_user_from_spot_id, User};
+use database::{veriy_user_from_spot_id, User, set_full_token};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng,Rng};
 use serde_json::Value;
@@ -156,6 +156,9 @@ pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_sp
 		None => generate_new_user(&mut client, spot_id).await,
 		Some(user) => user,
 	};
+
+	// Update FullToken anyway because a new refresh token has been issued
+	set_full_token(&mut client, &user.user_id, &token).await;
 
 	user.cookie
 
