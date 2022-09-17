@@ -142,6 +142,8 @@ pub async fn authenticate_user(mut client: tokio_postgres::Client, mut client_sp
 	let token = get_user_tokens_from_code(&mut client_spot, &code, &redirect_uri).await;
 
 
+
+
 }
 
 #[tokio::main]
@@ -158,7 +160,7 @@ async fn main() {
 		Some(token) => token,
 		None => {
 			let l_t = authentication::get_app_token(&mut client_spot).await;
-			database::set_access_token(&mut client, &app, &l_t).await;
+			database::update_access_token(&mut client, &app, &l_t).await;
 			l_t
 		}
 	};

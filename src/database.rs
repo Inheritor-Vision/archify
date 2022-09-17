@@ -87,7 +87,7 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 	token
 }
 
-pub async fn set_access_token(client: &mut tokio_postgres::Client, user_id: &String, token: &Token){
+pub async fn update_access_token(client: &mut tokio_postgres::Client, user_id: &String, token: &Token){
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		&user_id.as_str(), 
 		&token.token.access_token.as_str(),
@@ -96,7 +96,7 @@ pub async fn set_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 		&i64::try_from(token.received_at).unwrap()
 	];
 
-	let _r = client.execute("INSERT INTO spotify_tokens (user_id, access_token_value, token_type, duration, received_at) VALUES ($1::TEXT, $2::TEXT, $3::BOOL, $4::TEXT, $5::BIGINT, $6::BIGINT) ON CONFLICT (user_id) DO UPDATE SET token_value = $2::TEXT, token_type = $3::TEXT, duration = $4::BIGINT, received_at = $5::BIGINT", params)
+	let _r = client.execute("UPDATE spotify_tokens SET (user_id, access_token_value, token_type, duration, received_at) = ($1::TEXT, $2::TEXT, $3::BOOL, $4::TEXT, $5::BIGINT, $6::BIGINT)", params)
 		.await
 		.unwrap();
 }
