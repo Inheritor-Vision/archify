@@ -53,7 +53,7 @@ pub async fn initiliaze_db() -> tokio_postgres::Client{
 
 pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &String) -> Option<Token>{
 	let params:&[&(dyn tokio_postgres::types::ToSql + Sync)] = &[&user_id.as_str()];
-	let r = client.query_opt("SELECT access_token_value, duration, token_type, received_at, is_app FROM spotify_tokens WHERE user_id = $1::TEXT",&params);
+	let r = client.query_opt("SELECT access_token_value, duration, token_type, received_at FROM spotify_tokens WHERE user_id = $1::TEXT",&params);
 
 	let time = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
@@ -75,7 +75,7 @@ pub async fn get_access_token(client: &mut tokio_postgres::Client, user_id: &Str
 						token_type: row.get("token_type")
 					},
 					received_at: received_at,
-					is_app: row.get("is_app"),
+					client_id: user_id.clone(),
 				};
 				Some(t)	
 			}else{
