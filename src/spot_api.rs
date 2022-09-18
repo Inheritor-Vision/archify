@@ -1,4 +1,3 @@
-use std::thread::current;
 use std::{sync::Arc, convert::TryInto};
 use std::process::exit;
 
