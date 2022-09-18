@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::process::exit;
 
-use crate::{authentication::Token, database::{Playlist, Playlists}};
+use crate::{authentication::Token, database::{Playlist, Playlists, User}};
 
 use chrono::Utc;
 use url::{Url};
@@ -123,6 +123,47 @@ pub async fn get_all_public_playlists(client: &Client, token: &Token, playlists:
 	}
 
 	res
+
+}
+
+pub async fn get_all_followed_playlist_id(client: &Client, user_token: &Token, user: User) -> Vec<String>{
+	let mut headers = HeaderMap::new();
+	let mut playlists_id = Vec::<String>::new();
+	let uri = "https://api.spotify.com/v1/me/playlists";
+
+	add_user_authorization(&mut headers, &user_token);
+
+	let mut cpt:u32 = 0;
+
+	loop{
+		let cpt_str = cpt.to_string();
+		let query = &[("offset", cpt_str.as_str()), ("limit", "20")];
+		let body = client.get(uri)
+			.query(query)
+			.headers(headers.clone())
+			.send()
+			.await
+			.unwrap()
+			.text()
+			.await
+			.unwrap();
+
+		let json_raw: Value = serde_json::from_str(body.as_str()).unwrap();
+		let items: &Vec<Value> = json_raw["items"].as_array().unwrap();
+
+		for val in items{
+			let id = val["id"].to_string();
+			playlists_id.push(id);
+		}
+
+		if items.len() < 20{
+			break;
+		}else{
+			cpt += 20;
+		}
+	}
+
+	playlists_id
 
 }
 
