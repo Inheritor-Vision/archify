@@ -126,7 +126,7 @@ pub async fn get_all_public_playlists(client: &Client, token: &Token, playlists:
 
 }
 
-pub async fn get_all_followed_playlist_id(client: &Client, user_token: &Token, user: User) -> Vec<String>{
+pub async fn get_all_followed_playlist_id(client: &Client, user_token: &Token) -> Vec<String>{
 	let mut headers = HeaderMap::new();
 	let mut playlists_id = Vec::<String>::new();
 	let uri = "https://api.spotify.com/v1/me/playlists";
