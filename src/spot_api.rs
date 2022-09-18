@@ -1,4 +1,5 @@
-use std::sync::Arc;
+use std::thread::current;
+use std::{sync::Arc, convert::TryInto};
 use std::process::exit;
 
 use crate::{authentication::Token, database::{Playlist, Playlists, User}};
@@ -133,7 +134,7 @@ pub async fn get_all_followed_playlist_id(client: &Client, user_token: &Token, u
 
 	add_user_authorization(&mut headers, &user_token);
 
-	let mut cpt:u32 = 0;
+	let mut cpt:u64 = 0;
 
 	loop{
 		let cpt_str = cpt.to_string();
@@ -149,14 +150,16 @@ pub async fn get_all_followed_playlist_id(client: &Client, user_token: &Token, u
 			.unwrap();
 
 		let json_raw: Value = serde_json::from_str(body.as_str()).unwrap();
+		let max = json_raw["total"].as_u64().unwrap();
 		let items: &Vec<Value> = json_raw["items"].as_array().unwrap();
+		let current_size: u64 = items.len().try_into().unwrap();
 
 		for val in items{
 			let id = val["id"].to_string();
 			playlists_id.push(id);
 		}
 
-		if items.len() < 20{
+		if cpt + current_size >= max{
 			break;
 		}else{
 			cpt += 20;
