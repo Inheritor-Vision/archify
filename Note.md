@@ -2,9 +2,11 @@
 
 # TODO
 
-- Keep track of wich user wanted wich playlist (probably a N to N table btw users & public play lists). Implementation to be assessed for private.
 - By default, archive all playlist followed by a user AND all made for you playlsits, even if not foollowed (need to sue search). Reduce token scopce to that.
-- Change the way // request are done. [doc](https://docs.rs/reqwest/latest/reqwest/struct.Client.html) state that is use Arc internally. Better do something like 10 spawns that share the work (divided in 10 then). Fist get the number of tracks of all playlist, then divide the work betwenn them. Indeed, for now it doesn ot work because if there is a huge amount track in the playlist, then spotify api will only return part of it. Offset & limit will ahve to be used. Better defined limit to know how much tracks will be returned. Try to find the maximum.
+- Update daily followed playlists of users and verify playlist content
+- Changer la facon d'update (les tracks ont une added date, si elle est apres la dernière update, la playlist a changé!) => pas besoin de hash
+- In **authentication**, create a function that update the token if expired and put it in every function of **spot api**
+- Change the way // request are done. [doc](https://docs.rs/reqwest/latest/reqwest/struct.Client.html) state that is use Arc internally. Better do something like 10 spawns that share the work (divided in 10 then). Fist get the number of tracks of all playlist, then divide the work betwenn them. Indeed, for now it doesn ot work because if there is a huge amount track in the playlist , then spotify api will only return part of it. Offset & limit will ahve to be used, if provided by spotify api. Better defined limit (seems like it is 100) to know how much tracks will be returned. Try to find the maximum.
 - Find how to show a playlist to a user (Put a playlist in the user account but need modify rights, Create a playlist from archify account (maybe use the family account I have) and share it with the user or simply give the list on the site)
 - Handle errors (from spotify API, from posgre data base and Rust in general (aka unwrap))
 - ON HOLD: Made for you by Spotify are public playlists and cannot be turn private. Get private playlist (try to find a way to distinguish between private and public to avoid giving the token for nothing)
@@ -52,7 +54,7 @@ pub async fn get_authorize_code(client: &mut tokio_postgres::Client, client_spot
 		.unwrap();
 
 	//let scope = header::HeaderValue::from_str(String::from("playlist-read-private playlist-read-public playlist-read-collaborative user-follow-read user-library-read") // Maybe user-read-private for search ????
-	let scope = header::HeaderValue::from_str(String::from("user-read-private user-read-email") // Maybe user-read-private for search ????
+	let scope = header::HeaderValue::from_str(String::from("playlist-read-private") // For now, needed to read followed playlsits 
 			.as_str())
 		.unwrap();
 
