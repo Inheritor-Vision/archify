@@ -81,7 +81,7 @@ fn create_client(headers: header::HeaderMap) -> Client{
 
 async fn update_all_playlists(mut client: tokio_postgres::Client, client_spot: Client, token: authentication::Token){
 	
-	let playlists = database::get_all_latest_public_playlists(&mut client).await;
+	let playlists = database::get_all_latest_playlists(&mut client).await;
 	let received_playlists = spot_api::get_all_public_playlists(&client_spot, &token, &playlists).await;
 
 	let mut iter_old = playlists.iter();
@@ -92,7 +92,7 @@ async fn update_all_playlists(mut client: tokio_postgres::Client, client_spot: C
 		let old_sha256 = iter_old.next().unwrap().sha256.as_ref();
 		let new_sha256 = p.sha256.as_ref();
 		if *old_sha256 != *new_sha256 {
-			database::set_public_playlist(&mut client, p).await;
+			database::set_playlist(&mut client, p).await;
 		}
 	}
 
@@ -113,7 +113,7 @@ async fn set_new_public_playlist(mut client: tokio_postgres::Client, client_spot
 
 	let playlist = spot_api::get_public_playlist(&client_spot, &token, &playlist_id).await;
 
-	database::set_public_playlist(&mut client, &playlist).await;
+	database::set_playlist(&mut client, &playlist).await;
 
 }
 

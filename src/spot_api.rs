@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::process::exit;
 
-use crate::{authentication::Token, database::{PublicPlaylist, PublicPlaylists}};
+use crate::{authentication::Token, database::{Playlist, Playlists}};
 
 use chrono::Utc;
 use url::{Url};
@@ -62,7 +62,7 @@ pub async fn get_spot_id(client: &Client, token: &Token) -> String {
 
 }
 
-pub async fn get_public_playlist(client: &Client, token: &Token, playlist_id: &String) -> PublicPlaylist{
+pub async fn get_public_playlist(client: &Client, token: &Token, playlist_id: &String) -> Playlist{
 	let uri = format!("https://api.spotify.com/v1/playlists/{}", &playlist_id);
 	let auth_value = format!("{} {}", token.token.token_type, token.token.access_token);
 	let timestamp = Utc::now();
@@ -88,7 +88,7 @@ pub async fn get_public_playlist(client: &Client, token: &Token, playlist_id: &S
 
 	let sha256 = hasher.finalize();
 
-	let res = PublicPlaylist {
+	let res = Playlist {
 		id: playlist_id.clone(),
 		sha256: Box::from(sha256.as_slice()),
 		timestamp: timestamp,
@@ -99,8 +99,8 @@ pub async fn get_public_playlist(client: &Client, token: &Token, playlist_id: &S
 	
 }
 
-pub async fn get_all_public_playlists(client: &Client, token: &Token, playlists: &PublicPlaylists) -> PublicPlaylists{
-	let mut res = PublicPlaylists::new();
+pub async fn get_all_public_playlists(client: &Client, token: &Token, playlists: &Playlists) -> Playlists{
+	let mut res = Playlists::new();
 	let mut handlers = Vec::new();
 
 	let th_client = Arc::new(client.clone());	

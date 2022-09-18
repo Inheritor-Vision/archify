@@ -3,24 +3,24 @@ use serde_json::Value;
 use crate::{authentication::{Token, AppToken, FullToken}, get_app_data};
 use chrono::{DateTime, Utc};
 
-pub struct PublicPlaylist {
+pub struct Playlist {
     pub id:  String,
     pub sha256:  Box<[u8]>,
 	pub timestamp: DateTime<Utc>,
     pub data:  Value
 }
 
-pub type PublicPlaylists = Vec<PublicPlaylist>;
+pub type Playlists = Vec<Playlist>;
 
-pub struct PrivatePlaylist {
-    pub id:  String,
-	pub user_id: String,
-    pub sha256:  Box<[u8]>,
-	pub timestamp: DateTime<Utc>,
-    pub data:  Value
-}
+// pub struct PrivatePlaylist {
+//     pub id:  String,
+// 	pub user_id: String,
+//     pub sha256:  Box<[u8]>,
+// 	pub timestamp: DateTime<Utc>,
+//     pub data:  Value
+// }
 
-pub type PrivatePlaylists = Vec<PrivatePlaylist>;
+// pub type PrivatePlaylists = Vec<PrivatePlaylist>;
 
 pub struct User {
 	pub user_id: String,
@@ -49,10 +49,10 @@ async fn connect_db() -> tokio_postgres::Client{
 async fn create_tables(client: &mut tokio_postgres::Client){
 
 	let (_r1, _r2, _r3, _r4) = futures::join!(
-		client.execute("CREATE TABLE IF NOT EXISTS public_playlists (playlist_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, ts)) ", &[]),
-		client.execute("CREATE TABLE IF NOT EXISTS private_playlists (playlist_id TEXT, user_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, user_id, ts), CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(user_id)) ", &[]),
+		client.execute("CREATE TABLE IF NOT EXISTS playlists (playlist_id TEXT, playlist_sha256 BYTEA, timestamp TIMESTAMP, playlist_data JSONB, PRIMARY KEY (playlist_id, ts)) ", &[]),
 		client.execute("CREATE TABLE IF NOT EXISTS spotify_tokens (refresh_token_value TEXT, user_id TEXT, access_token_value TEXT, token_type TEXT, duration BIGINT, received_at BIGINT, PRIMARY KEY(user_id), CONSTRAINT fk_user_id FOREIGN KEY(users_id) REFERENCES users(user_id))", &[]),
 		client.execute("CREATE TABLE IF NOT EXISTS users (client_id TEXT, spot_id TEXT, cookie TEXT, PRIMARY KEY (user_id))", &[]),
+		client.execute("CREATE TABLE IF NOT EXISTS users_playlists (user_id TEXT, playlist_id, PRIMARY KEY(user_id, playlist_id), CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(user_id), CONSTRAINT fk_playlist_id FOREIGN KEY (playlist_id) REFERNCES playlists(playlist_id))", &[]),
 	);
 
 }
@@ -196,12 +196,12 @@ pub async fn set_full_token(client: &mut tokio_postgres::Client, user_id: &Strin
 // 	res
 // }
 
-pub async fn get_all_latest_public_playlists(client: &mut tokio_postgres::Client) -> PublicPlaylists{
-	let mut res = PublicPlaylists::new();
-	let r = client.query("SELECT DISTINCT ON (playlist_id) * FROM public_playlists ORDER BY playlist_id, timestamp DESC", &[]).await.unwrap();
+pub async fn get_all_latest_playlists(client: &mut tokio_postgres::Client) -> Playlists{
+	let mut res = Playlists::new();
+	let r = client.query("SELECT DISTINCT ON (playlist_id) * FROM playlists ORDER BY playlist_id, timestamp DESC", &[]).await.unwrap();
 
 	for row in r{
-		let t = PublicPlaylist{
+		let t = Playlist{
 			id: row.get("playlist_id"),
 			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
 			timestamp: row.get("timestamp"),
@@ -213,48 +213,48 @@ pub async fn get_all_latest_public_playlists(client: &mut tokio_postgres::Client
 	res
 }
 
-pub async fn get_all_latest_private_playlists(client: &mut tokio_postgres::Client) -> PrivatePlaylists{
-	let mut res = PrivatePlaylists::new();
-	let r = client.query("SELECT DISTINCT ON (playlist_id) * FROM private_playlists ORDER BY playlist_id, timestamp DESC", &[]).await.unwrap();
+// pub async fn get_all_latest_private_playlists(client: &mut tokio_postgres::Client) -> PrivatePlaylists{
+// 	let mut res = PrivatePlaylists::new();
+// 	let r = client.query("SELECT DISTINCT ON (playlist_id) * FROM private_playlists ORDER BY playlist_id, timestamp DESC", &[]).await.unwrap();
+// 
+// 	for row in r{
+// 		let t = PrivatePlaylist{
+// 			id: row.get("playlist_id"),
+// 			user_id: row.get("user_id"),
+// 			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
+// 			timestamp: row.get("timestamp"),
+// 			data: row.get("playlist_data")
+// 		};
+// 		res.push(t);
+// 	}
+// 
+// 	res
+// }
 
-	for row in r{
-		let t = PrivatePlaylist{
-			id: row.get("playlist_id"),
-			user_id: row.get("user_id"),
-			sha256: Box::from(row.get::<&str, &[u8]>("playlist_sha256")),
-			timestamp: row.get("timestamp"),
-			data: row.get("playlist_data")
-		};
-		res.push(t);
-	}
-
-	res
-}
-
-pub async fn set_public_playlist(client: &mut tokio_postgres::Client, playlist: &PublicPlaylist){
+pub async fn set_playlist(client: &mut tokio_postgres::Client, playlist: &Playlist){
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
 		&playlist.id,
 		&&(*playlist.sha256),
 		&playlist.timestamp,
 		&playlist.data
 	];
-	let _r = client.execute("INSERT INTO public_playlists VALUES ($1::TEXT, $2::BYTEA, $3::TIMESTAMP, $4::JSONB)", params)
+	let _r = client.execute("INSERT INTO playlists VALUES ($1::TEXT, $2::BYTEA, $3::TIMESTAMP, $4::JSONB)", params)
 		.await
 		.unwrap();
 }
 
-pub async fn set_private_playlist(client: &mut tokio_postgres::Client, playlist: &PrivatePlaylist, user_id: &String){
-	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
-		&playlist.id,
-		&user_id,
-		&&(*playlist.sha256),
-		&playlist.timestamp,
-		&playlist.data
-	];
-	let _r = client.execute("INSERT INTO private_playlists VALUES ($1::TEXT, $2::TEXT, $3::BYTEA, $4::TIMESTAMP, $5::JSONB)", params)
-		.await
-		.unwrap();
-}
+// pub async fn set_private_playlist(client: &mut tokio_postgres::Client, playlist: &PrivatePlaylist, user_id: &String){
+// 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
+// 		&playlist.id,
+// 		&user_id,
+// 		&&(*playlist.sha256),
+// 		&playlist.timestamp,
+// 		&playlist.data
+// 	];
+// 	let _r = client.execute("INSERT INTO private_playlists VALUES ($1::TEXT, $2::TEXT, $3::BYTEA, $4::TIMESTAMP, $5::JSONB)", params)
+// 		.await
+// 		.unwrap();
+// }
 
 pub async fn claim_new_user_id_unicity(client: &mut tokio_postgres::Client, user_id: &String, spot_id: &String, cookie: &String) -> bool{
 	let params: &[&(dyn tokio_postgres::types::ToSql + Sync)] = &[
